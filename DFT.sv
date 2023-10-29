@@ -40,7 +40,7 @@ reg [1:0] clk_en;
 reg [4:0] latency;
 reg done_reg;
 reg math_en;
-
+integer incr;
 
 assign time_data_out = time_data[0];
 assign cos_out = cos_data[harm_number];
@@ -148,11 +148,17 @@ always @(clk)
 		2'b10: if(clk) clk_en <= 2'b10; else if (sum_was) clk_en <= 2'b0;
 	endcase
 
+	always @(posedge clk)
+		for(incr = 0; incr < 16; incr = incr + 1)
+			if(sum_was) begin 
+					cos_data[({4'b0,amp_index}<<4) + incr] <= cos_sum[incr];
+					sin_data[({4'b0,amp_index}<<4) + incr] <= sin_sum[incr];
+			end
+	
 genvar i, j;
 generate
 
-		for(i = 0; i < 128; i = i + 1) begin : i1
-		if(i < 16) begin : if1
+		for(i = 0; i < 16; i = i + 1) begin : i1
 			FPMul cos_mul1 (
 				.n_reset(n_reset),
 				.clk(clk),
@@ -188,13 +194,6 @@ generate
 				.term2((time_index == 0)? 32'b0: sin_data[k<<4 + i]),
 				.sum(sin_sum[i])
 			);
-		end
-		
-		always @(posedge clk)
-			if(sum_was) begin 
-					cos_data[i] <= cos_sum[i % 16];
-					sin_data[i] <= sin_sum[i % 16];
-			end
 		
 	end
 		
