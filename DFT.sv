@@ -38,6 +38,8 @@ reg sum_was, sum_was1;
 reg [1:0] start_strb;
 reg [1:0] clk_en;
 reg [4:0] latency;
+reg [31:0] freq_temp_cos [16];
+reg [31:0] freq_temp_sin [16];
 reg done_reg;
 reg math_en;
 integer incr;
@@ -172,7 +174,7 @@ generate
 				.n_reset(n_reset),
 				.clk(clk),
 				.clk_en(clk_en[0]),
-				.mult1(cos_in[i]),
+				.mult1(sin_in[i]),
 				.mult2(time_data[time_index]),
 				.product(prod_sin[i])
 			);
@@ -182,7 +184,7 @@ generate
 				.clk(clk),
 				.clk_en(clk_en[1]),
 				.term1(prod_cos[i]),
-				.term2((time_index == 0)? 32'b0: cos_data[k<<4 + i]),
+				.term2((time_index == 0)? 32'b0: freq_temp_cos[i]),
 				.sum(cos_sum[i])
 			);
 		
@@ -191,10 +193,15 @@ generate
 				.clk(clk),
 				.clk_en(clk_en[1]),
 				.term1(prod_sin[i]),
-				.term2((time_index == 0)? 32'b0: sin_data[k<<4 + i]),
+				.term2((time_index == 0)? 32'b0: freq_temp_sin[i]),
 				.sum(sin_sum[i])
 			);
 		
+		always(negedge n_reset or posedge clk)
+			if(sum_was) begin
+				freq_temp_cos[i] <= cos_sum[i]
+				freq_temp_sin[i] <= sin_sum[i];
+			end
 	end
 		
 	for(j = 127; j >= 0; j = j - 1) begin : ji1
