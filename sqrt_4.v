@@ -21,7 +21,15 @@ reg sum_done;
 wire [31:0] quotient;
 wire [31:0] sum;
 wire div_done;
+wire pulse, pulse_done;
 
+pulse_gen15(
+	.n_reset(n_reset),
+	.clk(clk),
+	.clk_en(clk_en[1]),
+	.out(pulse),
+	.done_pulse(pulse_done)
+);
 
 FPDiv div_module(
 	.n_reset(n_reset),
@@ -36,13 +44,13 @@ FPDiv div_module(
 FPAdd add_sub(
 	.n_reset(n_reset),
 	.clk(clk),
-	.clk_en(clk_en[1]),
+	.clk_en(pulse),
 	.term1(quotient),
 	.term2(x),
 	.sum(sum)
 );
 
-always @(n_reset or clk)
+always @(negedge n_reset or posedge clk)
 	if(!n_reset) begin
 		x <= {8'h3F, 24'b0};
 		state <= 2'b0;
@@ -61,13 +69,16 @@ always @(n_reset or clk)
 															  if (clk) ready_was <= div_sync[1]; 
 															 if(clk & ready_was) state <= 2'b10;
 															 calc_done <=1'b0; end
-	   2'b10: begin if(!sum_done & clk) clk_en <= 2'b10; else clk_en <= 2'b0; 
-				 if(clk & clk_en[1]) sum_done <= 1'b1;
-				 if(sum_done) begin x <= {sum[31], sum[30:23] - 1, sum[22:0]}; iter <= iter + 3'b01; end
-				 if(sum_done) begin 
-						if(iter == 3'b100) state <= 2'b0; else state <= 2'b01; 
-								  end
-					calc_done <= 1'b0;
+	   2'b10: begin 	if(!(pulse_done & clk_en[1]))clk_en <= 2'b10; else clk_en <= 2'b0;	
+							if(pulse_done & clk_en[1]) iter <= iter + 3'd1;
+							if(pulse_done & clk_en[1]) begin x <= {sum[31], sum[30:23] - 1, sum[22:0]}; iter <= iter + 3'b01; end
+							if(pulse_done & clk_en[1]) begin 
+								if(iter == 3'b100) 
+									state <= 2'b0; 
+								else 
+									state <= 2'b01; 						
+							end
+							calc_done <= 1'b0;
 				end
  	endcase
 	end

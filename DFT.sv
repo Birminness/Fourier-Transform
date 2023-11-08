@@ -197,9 +197,13 @@ generate
 				.sum(sin_sum[i])
 			);
 		
-		always(negedge n_reset or posedge clk)
+		always @(negedge n_reset or posedge clk)
+			if(!n_reset) begin
+				freq_temp_cos[i] <= cos_sum[i];
+				freq_temp_sin[i] <= sin_sum[i];
+			end else 	
 			if(sum_was) begin
-				freq_temp_cos[i] <= cos_sum[i]
+				freq_temp_cos[i] <= cos_sum[i];
 				freq_temp_sin[i] <= sin_sum[i];
 			end
 	end
