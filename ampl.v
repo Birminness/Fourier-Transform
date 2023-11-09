@@ -20,7 +20,7 @@ reg [1:0] start_strb;
 assign done = done_idle;
 assign ampli = sqrt_k;
 
-pulse_gen15(
+pulse_gen15 pulse15(
 	.n_reset(n_reset),
 	.clk(clk),
 	.clk_en(clk_en[1]),
