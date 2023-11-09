@@ -23,7 +23,7 @@ wire [31:0] sum;
 wire div_done;
 wire pulse, pulse_done;
 
-pulse_gen15(
+pulse_gen15 pulse15(
 	.n_reset(n_reset),
 	.clk(clk),
 	.clk_en(clk_en[1]),
